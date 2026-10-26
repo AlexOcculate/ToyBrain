@@ -45,79 +45,88 @@ class ToolRegistry:
         if name not in self._tools:
             # Line 37:  Return an error string (not an exception - the agent loop handles this).
             return f"Error: Unknown tool '{name}'"
-        # Line 39:  Call the registered function with the provided arguments.
-        result = self._tools[name](**arguments)
-        # Line 40:  Convert result to string (tool results go back as text in the next message).
-        return str(result)
+        # Line 39:  Attempt to call the registered function with the provided arguments.
+        try:
+            # Line 41:  Invoke the tool function, unpacking arguments as keyword args.
+            result = self._tools[name](**arguments)
+            # Line 42:  Convert result to string (tool results go back as text in the next message).
+            return str(result)
+        except Exception as e:
+            # Line 45:  Catch ANY exception from tool execution (TypeError, RuntimeError, etc.).
+            # Line 46:  Return a formatted error string so the agent loop can feed it back to the model.
+            # Line 47:  This is critical: a crashing tool must NOT crash the entire agent.
+            return (
+                f"Error: Tool '{name}' failed with exception: {type(e).__name__}: {e}"
+            )
 
-    # Line 43:  Get list of registered tool names.
+    # Line 50:  Get list of registered tool names.
     def get_names(self) -> List[str]:
-        # Line 45:  Return list of all registered tool names.
+        # Line 52:  Return list of all registered tool names.
         return list(self._tools.keys())
 
 
-# Line 49:  Create and populate the default tool registry with math tools.
+# Line 56:  Create and populate the default tool registry with math tools.
 def create_default_registry() -> ToolRegistry:
-    # Line 51:  Instantiate a new empty registry.
+    # Line 58:  Instantiate a new empty registry.
     registry = ToolRegistry()
 
-    # Line 53:  Register the 'add' tool.
+    # Line 60:  Register the 'add' tool.
     def add(a: int, b: int) -> int:
-        # Line 55:  Return the sum of two numbers.
+        # Line 62:  Return the sum of two numbers.
         return a + b
 
-    # Line 57:  Register add with its schema.
+    # Line 64:  Register add with its schema.
     registry.register(
-        # Line 59:  Tool name as the model will reference it.
+        # Line 66:  Tool name as the model will reference it.
         name="add",
-        # Line 60:  The actual Python function to call.
+        # Line 67:  The actual Python function to call.
         func=add,
-        # Line 61:  Description helps the model understand when to use this tool.
+        # Line 68:  Description helps the model understand when to use this tool.
         description="Add two integers together and return the result.",
-        # Line 62:  JSON Schema defining the expected parameters.
+        # Line 69:  JSON Schema defining the expected parameters.
         parameters={
-            # Line 64:  Parameter schema uses JSON Schema format.
+            # Line 71:  Parameter schema uses JSON Schema format.
             "type": "object",
-            # Line 65:  Properties defines each parameter's name and type.
+            # Line 72:  Properties defines each parameter's name and type.
             "properties": {
-                # Line 67:  First parameter 'a' is an integer.
+                # Line 74:  First parameter 'a' is an integer.
                 "a": {"type": "integer", "description": "First number"},
-                # Line 68:  Second parameter 'b' is an integer.
+                # Line 75:  Second parameter 'b' is an integer.
                 "b": {"type": "integer", "description": "Second number"},
             },
-            # Line 70:  Both parameters are required (model must provide both).
+            # Line 77:  Both parameters are required (model must provide both).
             "required": ["a", "b"],
         },
     )
 
-    # Line 74:  Register the 'subtract' tool.
+    # Line 81:  Register the 'subtract' tool.
     def subtract(a: int, b: int) -> int:
-        # Line 76:  Return the difference (a minus b).
+        # Line 83:  Return the difference (a minus b).
         return a - b
 
-    # Line 78:  Register subtract with its schema.
+    # Line 85:  Register subtract with its schema.
     registry.register(
-        # Line 80:  Tool name.
+        # Line 87:  Tool name.
         name="subtract",
-        # Line 81:  The function implementation.
+        # Line 88:  The function implementation.
         func=subtract,
-        # Line 82:  Description for the model.
+        # Line 89:  Description for the model.
         description="Subtract the second integer from the first and return the result.",
-        # Line 83:  Parameter schema (same structure as add).
+        # Line 90:  Parameter schema (same structure as add).
         parameters={
-            # Line 85:  Object type.
+            # Line 92:  Object type.
             "type": "object",
-            # Line 86:  Define the two integer properties.
+            # Line 93:  Define the two integer properties.
             "properties": {
-                # Line 88:  First number to subtract from.
+                # Line 95:  First number to subtract from.
                 "a": {"type": "integer", "description": "Number to subtract from"},
-                # Line 89:  Second number to subtract.
+                # Line 96:  Second number to subtract.
                 "b": {"type": "integer", "description": "Number to subtract"},
             },
-            # Line 91:  Both required.
+            # Line 98:  Both required.
             "required": ["a", "b"],
         },
     )
 
-    # Line 95:  Return the fully populated registry.
+    # Line 102:  Return the fully populated registry.
     return registry
