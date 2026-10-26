@@ -2,6 +2,7 @@
 
 # chmod +x create_folders.sh
 
+touch README.md
 touch main.py
 touch test_adversarial.py
 mkdir -p Harness/
